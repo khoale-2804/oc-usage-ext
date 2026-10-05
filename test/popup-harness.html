@@ -17,26 +17,32 @@
     <div class="sec" id="quota"></div>
     <div class="sep"></div>
     <div class="sec muted" id="session"></div>
-    <div class="sec setup" id="setup" style="display:none">
-      <button id="setup-btn" class="btn" type="button">Add OpenCode Go API key</button>
-      <div class="muted" style="margin-top:6px">Needed to read quota without OpenChamber.</div>
+    <div class="sec" id="action" style="display:none">
+      <button id="action-btn" class="btn" type="button"></button>
+      <div class="muted" id="action-hint" style="margin-top:6px"></div>
     </div>
   </div>
 </div>
 <script>
 // mock the shape background.js returns (same as OpenChamber's quota payload)
 const now = Date.now();
+const QUOTA = { providerId:'opencode-go', providerName:'OpenCode Go', ok:true, configured:true,
+  usage:{ windows:{
+    '5h':{usedPercent:31,remainingPercent:69,resetAfterSeconds:4008,resetAtFormatted:'2:22 PM'},
+    weekly:{usedPercent:12,remainingPercent:88,resetAfterSeconds:589455,resetAtFormatted:'Mon, Oct 12, 9:00 AM'},
+    monthly:{usedPercent:63,remainingPercent:37,resetAfterSeconds:1626787,resetAtFormatted:'Sat, Oct 24, 9:08 AM'} }},
+  fetchedAt: now };
 window.chrome = {
   runtime: {
-    sendMessage: async () => ({ providerId:'opencode-go', providerName:'OpenCode Go', ok:true, configured:true,
-      usage:{ windows:{
-        '5h':{usedPercent:31,remainingPercent:69,resetAfterSeconds:4008,resetAtFormatted:'2:22 PM'},
-        weekly:{usedPercent:12,remainingPercent:88,resetAfterSeconds:589455,resetAtFormatted:'Mon, Oct 12, 9:00 AM'},
-        monthly:{usedPercent:63,remainingPercent:37,resetAfterSeconds:1626787,resetAtFormatted:'Sat, Oct 24, 9:08 AM'} }},
-      fetchedAt: now }),
+    sendMessage: async () => {
+      const state = new URLSearchParams(location.search).get('state');
+      if (state === 'locked') return { providerId:'opencode-go', providerName:'OpenCode Go', ok:false, configured:true, locked:true };
+      if (state === 'nokey') return { providerId:'opencode-go', providerName:'OpenCode Go', ok:false, configured:false };
+      return QUOTA;
+    },
     openOptionsPage(){},
   },
-  storage: { local: { get: async () => ({ apiKey: 'demo' }) } },
+  storage: { local: { get: async () => ({ vault: {} }) } },
 };
 </script>
 <script src="/shared.js"></script>

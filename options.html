@@ -10,29 +10,51 @@
   <h1>OpenChamber Usage</h1>
 
   <section>
-    <h2>OpenCode Go API key</h2>
+    <h2>OpenCode Go key vault</h2>
     <p class="muted">
-      Used only to read your quota directly from <code>opencode.ai</code> when you are not on the
-      OpenChamber page. It is stored locally (<code>chrome.storage.local</code>) and never sent
-      anywhere else.
+      The key is encrypted with your passphrase (AES-GCM, PBKDF2-SHA256). Only the ciphertext is
+      stored; the key is never shown again and <b>cannot be recovered if you forget the
+      passphrase</b>. Unlocked, it lives only in memory and auto-locks after 15 minutes. It is used
+      only to call <code>opencode.ai</code>.
     </p>
-    <input id="key" type="password" placeholder="opencode-go API key" autocomplete="off" spellcheck="false">
-    <div class="actions">
-      <button id="save" class="primary" type="button">Save &amp; test</button>
-      <button id="clear" type="button">Clear</button>
-    </div>
     <p id="status" class="status"></p>
-    <p class="muted small">
-      Find the key in <code>~/.local/share/opencode/auth.json</code> under the <code>opencode-go</code>
-      entry, or from your OpenCode Go account.
-    </p>
+
+    <div id="setup">
+      <label class="field">API key
+        <input id="key" type="password" placeholder="opencode-go API key" autocomplete="off" spellcheck="false">
+      </label>
+      <label class="field">Passphrase
+        <input id="pass" type="password" placeholder="at least 8 characters" autocomplete="new-password">
+      </label>
+      <label class="field">Confirm passphrase
+        <input id="pass2" type="password" autocomplete="new-password">
+      </label>
+      <div class="actions">
+        <button id="save" class="primary" type="button">Encrypt &amp; save</button>
+      </div>
+      <p class="muted small">
+        Find the key in <code>~/.local/share/opencode/auth.json</code> under the
+        <code>opencode-go</code> entry, or from your OpenCode Go account.
+      </p>
+    </div>
+
+    <div id="manage" style="display:none">
+      <label class="field">Passphrase
+        <input id="unlock-pass" type="password" placeholder="unlock for this session" autocomplete="off">
+      </label>
+      <div class="actions">
+        <button id="do-unlock" class="primary" type="button">Unlock</button>
+        <button id="lock" type="button">Lock now</button>
+        <button id="wipe" class="danger" type="button">Wipe vault</button>
+      </div>
+    </div>
   </section>
 
   <section>
     <h2>What each mode shows</h2>
     <ul class="muted">
       <li><b>On the OpenChamber page</b> — quota, per-turn cost / cache hit / i-c/o, peak timer. No key needed.</li>
-      <li><b>Toolbar popup (anywhere)</b> — quota + peak timer. Needs the key above. Per-turn data needs OpenChamber.</li>
+      <li><b>Toolbar popup (anywhere)</b> — quota + peak timer, using the vault above. Per-turn needs OpenChamber.</li>
     </ul>
   </section>
 </main>

@@ -35,6 +35,10 @@ input {
 }
 input:focus { outline: 2px solid var(--primary); outline-offset: -1px; }
 .actions { display: flex; gap: 8px; margin: 12px 0 4px; }
+.field { display: block; margin-bottom: 10px; font-size: 13px; color: var(--muted-fg); }
+.field input { margin-top: 4px; }
+button.danger { color: #c62828; }
+@media (prefers-color-scheme: dark) { button.danger { color: #ef8a86; } }
 button {
   font: inherit; padding: 8px 14px; border-radius: var(--radius);
   border: 1px solid var(--border); background: var(--muted); color: var(--fg); cursor: pointer;

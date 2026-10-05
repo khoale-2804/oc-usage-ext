@@ -77,8 +77,9 @@ globalThis.OCU = (() => {
   const quotaWindowsHTML = (quota) => {
     if (!quota) return '<span class="muted">usage...</span>';
     if (!quota.ok) {
+      if (quota.locked) return '<span class="muted">OpenCode Go: locked</span>';
       if (quota.configured === false) {
-        return '<span class="muted">OpenCode Go: no API key</span>';
+        return '<span class="muted">OpenCode Go: no key</span>';
       }
       return '<span class="muted">OpenCode Go: ' + (quota.error ? String(quota.error) : 'unavailable') + '</span>';
     }

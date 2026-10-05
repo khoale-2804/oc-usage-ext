@@ -1,5 +1,5 @@
 'use strict';
-/* Options page: store the OpenCode Go API key used by the popup (API-key mode). */
+/* Options page: manage the encrypted key vault. The key is never displayed. */
 (() => {
   const $ = (id) => document.getElementById(id);
   const status = (text, kind) => {
@@ -8,43 +8,60 @@
     el.className = 'status' + (kind ? ' ' + kind : '');
   };
 
-  async function testQuota() {
-    try { return await chrome.runtime.sendMessage({ type: 'ocu:quota' }); }
-    catch { return { ok: false, configured: true, error: 'worker unavailable' }; }
+  const send = (msg) => chrome.runtime.sendMessage(msg).catch(() => ({ ok: false, error: 'worker unavailable' }));
+
+  async function refresh() {
+    const st = await send({ type: 'ocu:vaultStatus' });
+    const hasVault = Boolean(st && st.configured);
+    $('setup').style.display = hasVault ? 'none' : '';
+    $('manage').style.display = hasVault ? '' : 'none';
+    if (!hasVault) status('No key set.');
+    else if (st.unlocked) status('Vault configured. Unlocked (auto-locks after 15 min idle).', 'ok');
+    else status('Vault configured. Locked.', '');
+    $('key').value = '';
+    $('pass').value = '';
+    $('pass2').value = '';
+    $('unlock-pass').value = '';
   }
 
   async function save() {
-    const key = $('key').value.trim();
-    await chrome.storage.local.set({ apiKey: key });
-    const q = await testQuota();
-    if (q && q.ok) {
-      const w = q.usage.windows;
-      const parts = ['5h', 'weekly', 'monthly'].filter((k) => w[k])
-        .map((k) => k + ' ' + (100 - Math.round(w[k].usedPercent)) + '% left');
-      status('Saved. ' + (parts.join(' · ') || 'no windows returned'), 'ok');
-    } else if (q && q.configured === false) {
-      status('Saved, but the key is empty.', 'err');
-    } else {
-      status('Saved, but the usage call failed: ' + ((q && q.error) || 'unknown'), 'err');
-    }
+    const apiKey = $('key').value.trim();
+    const pass = $('pass').value;
+    const pass2 = $('pass2').value;
+    if (!apiKey) return status('Enter the API key.', 'err');
+    if (pass.length < 8) return status('Passphrase must be at least 8 characters.', 'err');
+    if (pass !== pass2) return status('Passphrases do not match.', 'err');
+    status('Checking key and encrypting...');
+    const res = await send({ type: 'ocu:setKey', apiKey, passphrase: pass });
+    if (res && res.ok) { await refresh(); status('Saved and unlocked. The key will not be shown again.', 'ok'); }
+    else status('Failed: ' + ((res && res.error) || 'unknown'), 'err');
   }
 
-  async function clear() {
-    await chrome.storage.local.remove('apiKey');
-    $('key').value = '';
-    status('Key cleared.', '');
+  async function unlock() {
+    const pass = $('unlock-pass').value;
+    if (!pass) return status('Enter your passphrase.', 'err');
+    status('Unlocking...');
+    const res = await send({ type: 'ocu:unlock', passphrase: pass });
+    if (res && res.ok) { await refresh(); status('Unlocked for this session.', 'ok'); }
+    else status('Failed: ' + ((res && res.error) || 'unknown'), 'err');
   }
 
-  async function load() {
-    const { apiKey } = await chrome.storage.local.get('apiKey');
-    $('key').value = apiKey || '';
-    if (apiKey) {
-      const q = await testQuota();
-      status(q && q.ok ? 'Key is working.' : 'Stored key: ' + ((q && q.error) || 'not verified'), q && q.ok ? 'ok' : 'err');
-    }
+  async function lock() {
+    await send({ type: 'ocu:lock' });
+    await refresh();
+    status('Locked.', '');
+  }
+
+  async function wipe() {
+    if (!confirm('Wipe the vault? The stored key is unrecoverable and you will need to enter it again.')) return;
+    await send({ type: 'ocu:wipe' });
+    await refresh();
+    status('Vault wiped.', '');
   }
 
   $('save').addEventListener('click', save);
-  $('clear').addEventListener('click', clear);
-  load();
+  $('do-unlock').addEventListener('click', unlock);
+  $('lock').addEventListener('click', lock);
+  $('wipe').addEventListener('click', wipe);
+  refresh();
 })();

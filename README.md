@@ -15,7 +15,7 @@ app's CSS variables (`--card`, `--border`, `--primary`, `--chart-2/4`, `--oc-gla
 
 | | OpenChamber page | Toolbar popup (any site) |
 |---|---|---|
-| Quota windows | ✅ (no key) | ✅ (needs API key) |
+| Quota windows | ✅ (no key) | ✅ (unlocked vault) |
 | Peak timer | ✅ | ✅ |
 | Per-turn cost / cache / i-c-o | ✅ | ❌ |
 
@@ -30,13 +30,37 @@ Per-turn data lives in OpenCode's session store, so it is page-only. The API key
 2. **Load unpacked** → select this folder (`~/apps/oc-usage-ext`).
 3. Open OpenChamber at `http://localhost:3000` for the full overlay.
 
-## API key (popup mode)
+## API key vault (popup mode)
 
-Toolbar icon → **Settings** (or `chrome://extensions` → Details → Extension options), paste your
-`opencode-go` API key, **Save & test**. It is stored in `chrome.storage.local` on your machine.
+Toolbar icon → **Settings** (or `chrome://extensions` → Details → Extension options):
 
-The key is the one OpenCode uses; find it in `~/.local/share/opencode/auth.json` under the
-`opencode-go` entry, or from your OpenCode Go account.
+1. Paste your `opencode-go` API key and choose a passphrase (≥8 chars). **Encrypt & save.**
+2. Each browser session, unlock once with the passphrase. It auto-locks after 15 minutes; **Lock now**
+   and **Wipe vault** are in Settings.
+
+The key is encrypted with AES-GCM; the key-encryption-key is derived from your passphrase with
+PBKDF2-SHA256 (600k iterations, random salt). Only the ciphertext is stored. **The key is never shown
+again and cannot be recovered if you forget the passphrase.** It is used only to call `opencode.ai`.
+
+Find the key in `~/.local/share/opencode/auth.json` under the `opencode-go` entry, or from your
+OpenCode Go account.
+
+## Security model
+
+What the vault guarantees:
+
+- **At rest:** only AES-GCM ciphertext exists (`chrome.storage.local`), locked to trusted extension
+  contexts so content scripts cannot read it. No plaintext on disk.
+- **In memory:** the unlocked key lives only in `chrome.storage.session` — in-memory, never persisted
+  to disk, cleared on browser restart / extension reload, not exposed to content scripts (Chrome
+  storage docs, 2026-09-11). It auto-locks after 15 minutes idle.
+- **No read-back:** the key is never rendered, in the popup, options page, or anywhere else.
+- **No recovery:** a forgotten passphrase means the vault is permanently dead. Wipe deletes it.
+
+What it does **not** guarantee: while unlocked, code running in this extension's own service worker
+can read the key — it must, to send the `Authorization` header. Encryption protects the key at rest,
+not from the extension itself, and not from a malicious extension update. Since you load it unpacked,
+Chrome does not auto-update it; keep it that way.
 
 ## Data sources (verified against @openchamber/web 2.1.1)
 
@@ -75,10 +99,10 @@ The extension collects nothing and sends nothing to us. It has no analytics.
 
 - On the OpenChamber page it only calls the local server already open in the tab (`/api/*`,
   `/api/event`), using that page's session cookie.
-- The popup, when you have saved a key, calls `https://opencode.ai/zen/go/v1/usage` directly from
-  the service worker to read your quota. The key is stored locally in `chrome.storage.local` and is
+- The popup, when you have unlocked the vault, calls `https://opencode.ai/zen/go/v1/usage` directly
+  from the service worker to read your quota. The key is stored only as AES-GCM ciphertext and is
   sent only to `opencode.ai`.
-- No other host is contacted. Remove the key any time from Settings.
+- No other host is contacted. Wipe the vault any time from Settings.
 
 ## Package for the Chrome Web Store
 
