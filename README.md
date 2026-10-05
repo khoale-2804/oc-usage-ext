@@ -6,6 +6,8 @@ Bottom-right overlay on the OpenChamber page, plus a toolbar popup that works an
 - **Current session** — turn count, cumulative cost, in/out + cache tokens (OpenChamber page only).
 - **Per turn** — the latest 5 turns, each with cache-hit %, price, and `i / c / o`
   (input / cache-read / output) tokens (OpenChamber page only).
+- **Usage (all sessions)** — totals, per-model cost, tool success/fail, streak, from the OpenCode
+  console API `/api/experimental/session/stats` (OpenChamber page only).
 - **Peak-hours timer** — DeepSeek peak/off-peak state and countdown to the next switch.
 
 Matches OpenChamber's theme automatically on the page: it renders in a Shadow DOM and reads the
@@ -18,6 +20,7 @@ app's CSS variables (`--card`, `--border`, `--primary`, `--chart-2/4`, `--oc-gla
 | Quota windows | ✅ (no key) | ✅ (unlocked vault) |
 | Peak timer | ✅ | ✅ |
 | Per-turn cost / cache / i-c-o | ✅ | ❌ |
+| All-session stats (per-model) | ✅ | ❌ |
 
 On the page it reuses the OpenChamber UI session cookie, so **no key is needed**. The popup has no
 session, so it reads quota straight from `opencode.ai` with your **OpenCode Go API key**.
@@ -70,7 +73,15 @@ Chrome does not auto-update it; keep it that way.
 | Quota (popup) | `GET https://opencode.ai/zen/go/v1/usage` with `Authorization: Bearer <key>` |
 | Current session totals | `GET /api/session/:id` |
 | Turns (rows + count) | `GET /api/session/:id/message?limit=100&order=desc` |
+| All-session stats | `GET /api/experimental/session/stats?tools=summary&timezone=...` |
+| Session log stream | `GET /api/experimental/session/:id/log?follow=true` (SSE, not yet used) |
 | Realtime | `EventSource('/api/event')` — `session.usage.updated`, `session.step.ended`, `session.execution.*` |
+
+The stats and log endpoints are OpenCode's own server ("console") API, proxied by OpenChamber at
+`http://localhost:3000/api/experimental/...`; the overlay reaches them with the page's session
+cookie. `/api/experimental/session/stats` returns `sessions`, `prompts`, `steps`,
+`tokens{input,output,reasoning,cache{read,write}}`, `cost`, `tools`, `activeDays`, `streak`,
+`activity[]`, and per-model `models[]`.
 
 A v2 **turn** is a sequence of steps. The overlay groups messages by user message: a turn starts at a
 `type:"user"` record and sums every completed `type:"assistant"` step after it. Each step carries

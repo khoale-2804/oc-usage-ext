@@ -10,7 +10,7 @@
  */
 (() => {
   const ORIGIN = location.origin;
-  const { fmtTokens, fmtMoney, cacheHit, quotaWindowsHTML, peakRowsHTML } = OCU;
+  const { fmtTokens, fmtMoney, fmtInt, cacheHit, quotaWindowsHTML, peakRowsHTML } = OCU;
 
   const getJSON = async (path) => {
     const res = await fetch(ORIGIN + path, { credentials: 'include' });
@@ -75,6 +75,8 @@
         <div class="sec" id="quota"></div>
         <div class="sep"></div>
         <div class="sec" id="session"></div>
+        <div class="sep"></div>
+        <div class="sec" id="stats"></div>
       </div>
     </div>`;
 
@@ -92,6 +94,7 @@
 
   // ---------------------------------------------------------------- state
   let quota = null;
+  let stats = null;
   const sess = { id: null, cost: 0, tokens: null, turns: 0, turnRows: [], busy: false };
 
   // -------------------------------------------------------------- rendering
@@ -137,6 +140,54 @@
       }).join('') + '</div>';
     }
     el.innerHTML = html;
+  }
+
+  function renderStats() {
+    const el = $('stats');
+    if (!stats) { el.innerHTML = '<span class="muted">usage...</span>'; return; }
+    if (!stats.ok) { el.innerHTML = '<span class="muted">usage: unavailable</span>'; return; }
+    const d = stats.data || {};
+    const t = d.tokens || {};
+    const cache = t.cache || {};
+    const since = d.range ? new Date(d.range.from).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
+    let html =
+      '<div class="row" style="padding:0"><span class="lbl muted" style="flex:1">usage'
+      + (since ? ' &middot; since ' + since : '') + '</span>'
+      + '<span class="val">' + fmtMoney(d.cost) + '</span></div>'
+      + '<div class="muted" style="margin-top:2px">' + fmtInt(d.steps) + ' steps &middot; ' + fmtInt(d.prompts)
+      + ' prompts &middot; ' + fmtInt(d.sessions) + ' sessions</div>'
+      + '<div class="muted">in ' + fmtTokens(t.input) + ' &middot; out ' + fmtTokens(t.output)
+      + ' &middot; r ' + fmtTokens(t.reasoning) + ' &middot; c ' + fmtTokens(cache.read) + '</div>';
+
+    const tools = d.tools && d.tools.mode !== 'none' ? d.tools.totals : null;
+    if (tools) {
+      html += '<div class="muted">tools ' + fmtInt(tools.calls)
+        + (tools.failed ? ' &middot; ' + fmtInt(tools.failed) + ' failed' : '')
+        + ' &middot; streak ' + fmtInt(d.streak) + 'd</div>';
+    }
+
+    const models = (d.models || []).slice(0, 3);
+    if (models.length) {
+      html += '<div class="turns">' + models.map((m) => {
+        const ref = m.model || {};
+        const id = (ref.id || '?') + (ref.variant && ref.variant !== 'default' ? '#' + ref.variant : '');
+        return '<div class="trow"><span class="muted" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'
+          + id + ' &middot; ' + fmtInt(m.steps) + ' steps">' + id + '</span>'
+          + '<span class="val">' + fmtMoney(m.cost) + '</span></div>';
+      }).join('') + '</div>';
+    }
+    el.innerHTML = html;
+  }
+
+  async function refreshStats() {
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const r = await getJSON('/api/experimental/session/stats?tools=summary&timezone=' + encodeURIComponent(tz));
+      stats = { ok: true, data: r.data || r };
+    } catch (e) {
+      stats = { ok: false, error: String(e && e.message || e) };
+    }
+    renderStats();
   }
 
   // ------------------------------------------------------------------ data
@@ -247,18 +298,21 @@
   renderPeaks();
   renderQuota();
   renderSession();
+  renderStats();
   refreshQuota();
+  refreshStats();
   pickSession();
   connect();
 
   setInterval(renderPeaks, 1000);
   setInterval(renderQuota, 1000);
   setInterval(refreshQuota, 60000);
+  setInterval(refreshStats, 60000);
   setInterval(() => {
     const id = new URL(location.href).searchParams.get('session');
     if (id && id !== sess.id) loadSession(id);
   }, 2000);
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) refreshQuota();
+    if (!document.hidden) { refreshQuota(); refreshStats(); }
   });
 })();

@@ -18,6 +18,7 @@ globalThis.OCU = (() => {
     if (n === 0) return '$0';
     return '$' + (n < 0.01 ? n.toFixed(4) : n.toFixed(3));
   };
+  const fmtInt = (n) => Number.isFinite(n) ? Math.round(n).toLocaleString() : '-';
   const fmtDur = (sec) => {
     if (!Number.isFinite(sec) || sec <= 0) return 'now';
     const d = Math.floor(sec / 86400);
@@ -100,5 +101,5 @@ globalThis.OCU = (() => {
     return rows.join('') || '<span class="muted">no windows</span>';
   };
 
-  return { fmtTokens, fmtMoney, fmtDur, PEAKS, isPeak, nextChange, cacheHit, peakRowsHTML, quotaWindowsHTML };
+  return { fmtTokens, fmtMoney, fmtInt, fmtDur, PEAKS, isPeak, nextChange, cacheHit, peakRowsHTML, quotaWindowsHTML };
 })();

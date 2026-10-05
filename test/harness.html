@@ -37,10 +37,19 @@ const MESSAGES = { data: [
   A(1500, 30000,  120, 0.0002033),  U,
   A(800,  5000,   90,  0.0000912),  U,
 ]};
+const STATS = { data: { range:{ from:1790211064023, to: now }, sessions:900, subagents:74, prompts:1849, steps:6995,
+  tokens:{ input:46226117, output:2346111, reasoning:3658655, cache:{ read:855172427, write:0 } }, cost:19.234021892,
+  tools:{ mode:'summary', totals:{ calls:6836, succeeded:6755, failed:79, unfinished:2 } }, activeDays:11, streak:10, activity:[],
+  models:[
+    { model:{ id:'deepseek-v4.1-flash', providerID:'opencode-go', variant:'high' }, steps:3335, tokens:{}, cost:5.933561238 },
+    { model:{ id:'glm-5.3-flash', providerID:'zai-coding-plan' }, steps:1200, tokens:{}, cost:3.1042 },
+    { model:{ id:'deepseek-v4.1-flash', providerID:'opencode-go', variant:'low' }, steps:880, tokens:{}, cost:2.4177 },
+  ] } };
 
 window.fetch = (url) => Promise.resolve({
   ok:true,
   json: () => Promise.resolve(
+    url.includes('/experimental/session/stats') ? STATS :
     url.includes('/api/quota/opencode-go') ? QUOTA :
     url.includes('/message') ? MESSAGES :
     /\/api\/session\?/.test(url) ? { data:[SESSION.data], cursor:{} } : SESSION),
