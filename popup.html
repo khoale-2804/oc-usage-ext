@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>OpenCode Go usage</title>
+<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+<div class="card">
+  <div class="row hdr">
+    <span class="title">OpenCode Go</span>
+    <button id="settings" class="link" type="button">Settings</button>
+  </div>
+  <div class="body">
+    <div class="sec" id="peaks"></div>
+    <div class="sep"></div>
+    <div class="sec" id="quota"></div>
+    <div class="sep"></div>
+    <div class="sec muted" id="session"></div>
+    <div class="sec setup" id="setup" style="display:none">
+      <button id="setup-btn" class="btn" type="button">Add OpenCode Go API key</button>
+      <div class="muted" style="margin-top:6px">Needed to read quota without OpenChamber.</div>
+    </div>
+  </div>
+</div>
+<script src="shared.js"></script>
+<script src="popup.js"></script>
+</body>
+</html>

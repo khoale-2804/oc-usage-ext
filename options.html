@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>OpenChamber Usage — settings</title>
+<link rel="stylesheet" href="options.css">
+</head>
+<body>
+<main>
+  <h1>OpenChamber Usage</h1>
+
+  <section>
+    <h2>OpenCode Go API key</h2>
+    <p class="muted">
+      Used only to read your quota directly from <code>opencode.ai</code> when you are not on the
+      OpenChamber page. It is stored locally (<code>chrome.storage.local</code>) and never sent
+      anywhere else.
+    </p>
+    <input id="key" type="password" placeholder="opencode-go API key" autocomplete="off" spellcheck="false">
+    <div class="actions">
+      <button id="save" class="primary" type="button">Save &amp; test</button>
+      <button id="clear" type="button">Clear</button>
+    </div>
+    <p id="status" class="status"></p>
+    <p class="muted small">
+      Find the key in <code>~/.local/share/opencode/auth.json</code> under the <code>opencode-go</code>
+      entry, or from your OpenCode Go account.
+    </p>
+  </section>
+
+  <section>
+    <h2>What each mode shows</h2>
+    <ul class="muted">
+      <li><b>On the OpenChamber page</b> — quota, per-turn cost / cache hit / i-c/o, peak timer. No key needed.</li>
+      <li><b>Toolbar popup (anywhere)</b> — quota + peak timer. Needs the key above. Per-turn data needs OpenChamber.</li>
+    </ul>
+  </section>
+</main>
+<script src="options.js"></script>
+</body>
+</html>

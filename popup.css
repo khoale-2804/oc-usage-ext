@@ -1,0 +1,42 @@
+:root {
+  color-scheme: light dark;
+  --card: #ffffff; --card-foreground: #241f18; --border: #e4ddcf;
+  --muted: #ece7dd; --muted-foreground: #6b6257; --primary: #c98a1e;
+  --primary-foreground: #fff; --chart-2: #4caf50; --chart-4: #e57373;
+  --radius: 9px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --card: #1c1a16; --card-foreground: #ece7dd; --border: #38332b;
+    --muted: #2c2924; --muted-foreground: #a89f92; --primary: #e8b04b;
+    --primary-foreground: #1a1610; --chart-2: #6cbe78; --chart-4: #e0736b;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  width: 268px;
+  font: 12px/1.4 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  background: var(--card); color: var(--card-foreground);
+}
+.card { width: 268px; overflow: hidden; }
+.row { display: flex; align-items: center; gap: 6px; padding: 8px 10px; }
+.hdr { border-bottom: 1px solid var(--border); }
+.hdr .title { font-weight: 600; flex: 1; }
+.body { }
+.sep { height: 1px; background: var(--border); }
+.sec { padding: 8px 10px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted-foreground); flex: none; }
+.dot.off { background: var(--chart-2); }
+.dot.on { background: var(--chart-4); }
+.muted { color: var(--muted-foreground); }
+.val { font-variant-numeric: tabular-nums; }
+.lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
+.bar { height: 4px; border-radius: 3px; background: var(--muted); overflow: hidden; flex: 1; }
+.bar > i { display: block; height: 100%; background: var(--primary); border-radius: 3px; }
+.grid { display: grid; grid-template-columns: 36px 1fr auto; gap: 4px 8px; align-items: center; }
+.link { background: none; border: 0; color: var(--muted-foreground); font: inherit; cursor: pointer; padding: 0; }
+.link:hover { color: var(--card-foreground); }
+.btn { width: 100%; border: 1px solid var(--border); background: var(--muted); color: var(--card-foreground);
+  border-radius: var(--radius); padding: 6px 8px; font: inherit; cursor: pointer; }
+.btn:hover { border-color: var(--primary); }

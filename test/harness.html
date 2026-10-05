@@ -49,6 +49,7 @@ window.fetch = (url) => Promise.resolve({
 window.EventSource = class { constructor(){} set onmessage(f){ this._f=f; } set onerror(f){} };
 </script>
 <!-- load the real widget code -->
+<script src="/shared.js"></script>
 <script src="/content.js"></script>
 </body>
 </html>
