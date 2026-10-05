@@ -1,6 +1,7 @@
 'use strict';
 /* Toolbar popup: quota + peak timer without OpenChamber (API-key vault). */
 (() => {
+  const ext = globalThis.browser ?? globalThis.chrome;
   const { quotaWindowsHTML, peakRowsHTML } = OCU;
   const $ = (id) => document.getElementById(id);
 
@@ -24,13 +25,13 @@
 
   async function loadQuota() {
     let quota = null;
-    try { quota = await chrome.runtime.sendMessage({ type: 'ocu:quota' }); }
+    try { quota = await ext.runtime.sendMessage({ type: 'ocu:quota' }); }
     catch { quota = { ok: false, configured: true, error: 'worker unavailable' }; }
     $('quota').innerHTML = quotaWindowsHTML(quota);
     showAction(quota);
   }
 
-  const openSettings = () => chrome.runtime.openOptionsPage();
+  const openSettings = () => ext.runtime.openOptionsPage();
   $('settings').addEventListener('click', openSettings);
   $('action-btn').addEventListener('click', openSettings);
   $('session').textContent = 'Per-turn cost & cache are shown on the OpenChamber page.';

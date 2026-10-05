@@ -1,6 +1,7 @@
 'use strict';
 /* Options page: manage the encrypted key vault. The key is never displayed. */
 (() => {
+  const ext = globalThis.browser ?? globalThis.chrome;
   const $ = (id) => document.getElementById(id);
   const status = (text, kind) => {
     const el = $('status');
@@ -8,7 +9,7 @@
     el.className = 'status' + (kind ? ' ' + kind : '');
   };
 
-  const send = (msg) => chrome.runtime.sendMessage(msg).catch(() => ({ ok: false, error: 'worker unavailable' }));
+  const send = (msg) => ext.runtime.sendMessage(msg).catch(() => ({ ok: false, error: 'worker unavailable' }));
 
   async function refresh() {
     const st = await send({ type: 'ocu:vaultStatus' });

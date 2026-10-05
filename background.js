@@ -6,9 +6,9 @@
  *   - The API key is encrypted at rest with AES-GCM. The key-encryption-key is
  *     derived from the user's passphrase with PBKDF2-SHA256 (600k iterations,
  *     random 16-byte salt, random 12-byte IV). Only the ciphertext is stored
- *     (chrome.storage.local), locked to TRUSTED_CONTEXTS so content scripts
+ *     (ext.storage.local), locked to TRUSTED_CONTEXTS so content scripts
  *     cannot read it.
- *   - Unlocking decrypts into chrome.storage.session: in-memory only, never
+ *   - Unlocking decrypts into ext.storage.session: in-memory only, never
  *     persisted to disk, cleared on browser restart / extension reload, and
  *     not exposed to content scripts (Chrome storage docs, 2026-09-11).
  *   - There is no recovery: a forgotten passphrase means the vault is dead.
@@ -25,8 +25,13 @@ const WINDOW_MAP = { '5h': 'rolling', weekly: 'weekly', monthly: 'monthly' };
 const KDF_ITERATIONS = 600000;
 const IDLE_LOCK_MS = 15 * 60 * 1000;
 
-// Content scripts must never see the vault ciphertext.
-chrome.storage.local.setAccessLevel({ accessLevel: 'TRUSTED_CONTEXTS' }).catch(() => {});
+// Chrome exposes promises on chrome.*; Firefox only on browser.*. Prefer browser.*.
+const ext = globalThis.browser ?? globalThis.chrome;
+
+// Content scripts must never see the vault ciphertext (Chrome only; Firefox lacks it).
+if (typeof ext.storage.local.setAccessLevel === 'function') {
+  ext.storage.local.setAccessLevel({ accessLevel: 'TRUSTED_CONTEXTS' }).catch(() => {});
+}
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -65,16 +70,16 @@ async function decryptKey(vault, passphrase) {
 
 // ---------------------------------------------------------------- session key
 async function getSessionKey() {
-  const { ocuKey, ocuKeyAt } = await chrome.storage.session.get(['ocuKey', 'ocuKeyAt']);
+  const { ocuKey, ocuKeyAt } = await ext.storage.session.get(['ocuKey', 'ocuKeyAt']);
   if (!ocuKey) return null;
   if (Date.now() - (ocuKeyAt || 0) > IDLE_LOCK_MS) {
-    await chrome.storage.session.remove(['ocuKey', 'ocuKeyAt']);
+    await ext.storage.session.remove(['ocuKey', 'ocuKeyAt']);
     return null;
   }
   return ocuKey;
 }
-const setSessionKey = (key) => chrome.storage.session.set({ ocuKey: key, ocuKeyAt: Date.now() });
-const clearSessionKey = () => chrome.storage.session.remove(['ocuKey', 'ocuKeyAt']);
+const setSessionKey = (key) => ext.storage.session.set({ ocuKey: key, ocuKeyAt: Date.now() });
+const clearSessionKey = () => ext.storage.session.remove(['ocuKey', 'ocuKeyAt']);
 
 // ------------------------------------------------------------------- provider
 function toWindow(entry) {
@@ -125,7 +130,7 @@ async function fetchQuotaWithKey(apiKey) {
 async function getQuota() {
   const key = await getSessionKey();
   if (!key) {
-    const { vault } = await chrome.storage.local.get('vault');
+    const { vault } = await ext.storage.local.get('vault');
     return vault
       ? { providerId: 'opencode-go', providerName: 'OpenCode Go', ok: false, configured: true, locked: true }
       : { providerId: 'opencode-go', providerName: 'OpenCode Go', ok: false, configured: false };
@@ -144,7 +149,7 @@ async function getQuota() {
 }
 
 async function vaultStatus() {
-  const { vault } = await chrome.storage.local.get('vault');
+  const { vault } = await ext.storage.local.get('vault');
   const key = await getSessionKey();
   return { configured: Boolean(vault), unlocked: Boolean(key) };
 }
@@ -158,13 +163,13 @@ async function saveVault(apiKey, passphrase) {
     return { ok: false, error: 'key check failed: ' + String(error && error.message || error) };
   }
   const vault = await encryptKey(apiKey.trim(), passphrase);
-  await chrome.storage.local.set({ vault });
+  await ext.storage.local.set({ vault });
   await setSessionKey(apiKey.trim());
   return { ok: true, unlocked: true };
 }
 
 async function unlockVault(passphrase) {
-  const { vault } = await chrome.storage.local.get('vault');
+  const { vault } = await ext.storage.local.get('vault');
   if (!vault) return { ok: false, error: 'no vault' };
   let apiKey;
   try {
@@ -177,7 +182,7 @@ async function unlockVault(passphrase) {
 }
 
 async function wipeVault() {
-  await chrome.storage.local.remove('vault');
+  await ext.storage.local.remove('vault');
   await clearSessionKey();
   return { ok: true };
 }
@@ -192,7 +197,7 @@ const HANDLERS = {
   'ocu:wipe': wipeVault,
 };
 
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+ext.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   const handler = msg && HANDLERS[msg.type];
   if (!handler) return false;
   Promise.resolve(handler(msg)).then(sendResponse, (e) => sendResponse({ ok: false, error: String(e && e.message || e) }));

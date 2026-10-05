@@ -27,11 +27,30 @@ session, so it reads quota straight from `opencode.ai` with your **OpenCode Go A
 
 Per-turn data lives in OpenCode's session store, so it is page-only. The API key does not unlock it.
 
+**What it talks to:** the page overlay calls **OpenChamber** (`http://localhost:3000/api/...`), which
+proxies **OpenCode** — the per-turn and usage data come from OpenCode's server API through OpenChamber.
+The popup talks **directly to `https://opencode.ai`** with the vault key. So the API key is used only
+by the popup; the overlay needs none.
+
 ## Install
 
+### Chrome / Edge / Brave / Vivaldi (Chromium)
 1. `chrome://extensions` → enable **Developer mode**.
 2. **Load unpacked** → select this folder (`~/apps/oc-usage-ext`).
 3. Open OpenChamber at `http://localhost:3000` for the full overlay.
+
+### Firefox
+1. `about:debugging#/runtime/this-firefox` → **Load Temporary Add-on…**
+2. Select `manifest.json` in this folder.
+3. The overlay works the same; the popup shows quota + peak timer.
+
+Firefox only supports temporary installs this way — they vanish on restart. For a permanent
+install, sign the package on [addons.mozilla.org](https://addons.mozilla.org/developers/) (free,
+unlisted is fine); the manifest already carries the required `browser_specific_settings.gecko.id`.
+
+The same package works in both: the manifest declares `background.service_worker` (Chromium) and
+`background.scripts` (Firefox event page), and the scripts use `browser.*` when present, else
+`chrome.*`.
 
 ## API key vault (popup mode)
 
