@@ -65,7 +65,7 @@ server makes, not the extension).
 ./pack.sh        # builds oc-usage-ext.zip with manifest.json, content.js, icons/
 ```
 
-Then follow `docs` below to upload it.
+Then upload it following the steps below.
 
 ## Publish to the Chrome Web Store
 
