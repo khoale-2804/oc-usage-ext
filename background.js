@@ -33,6 +33,44 @@ if (typeof ext.storage.local.setAccessLevel === 'function') {
   ext.storage.local.setAccessLevel({ accessLevel: 'TRUSTED_CONTEXTS' }).catch(() => {});
 }
 
+// --- overlay registration for a user-configured OpenChamber origin (Tailscale) ---
+const DYNAMIC_SCRIPT_ID = 'ocu-overlay';
+const STATIC_ORIGINS = new Set(['http://localhost:3000', 'http://127.0.0.1:3000']);
+
+const normalizeOrigin = (input) => {
+  if (typeof input !== 'string' || !input.trim()) return null;
+  let raw = input.trim();
+  if (!/^https?:\/\//i.test(raw)) raw = 'http://' + raw;
+  try { return new URL(raw).origin; } catch { return null; }
+};
+
+const canRegister = () => typeof ext.scripting?.registerContentScripts === 'function';
+
+async function syncContentScript() {
+  if (!canRegister()) return;
+  const { serverUrl } = await ext.storage.local.get('serverUrl');
+  try {
+    const existing = await ext.scripting.getRegisteredContentScripts({ ids: [DYNAMIC_SCRIPT_ID] });
+    if (existing.length) await ext.scripting.unregisterContentScripts({ ids: [DYNAMIC_SCRIPT_ID] });
+  } catch { /* nothing registered */ }
+  if (!serverUrl || STATIC_ORIGINS.has(serverUrl)) return;
+  try {
+    await ext.scripting.registerContentScripts([{
+      id: DYNAMIC_SCRIPT_ID,
+      matches: [serverUrl + '/*'],
+      js: ['shared.js', 'content.js'],
+      runAt: 'document_idle',
+      persistAcrossSessions: true,
+    }]);
+  } catch (e) {
+    console.warn('[oc-usage] overlay registration failed:', e && e.message);
+  }
+}
+
+ext.runtime.onInstalled.addListener(() => { syncContentScript(); });
+ext.runtime.onStartup.addListener(() => { syncContentScript(); });
+syncContentScript();
+
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 const b64 = (buf) => {
@@ -195,6 +233,21 @@ const HANDLERS = {
   'ocu:unlock': (msg) => unlockVault(msg.passphrase),
   'ocu:lock': async () => { await clearSessionKey(); return { ok: true, unlocked: false }; },
   'ocu:wipe': wipeVault,
+  'ocu:getServer': async () => {
+    const { serverUrl } = await ext.storage.local.get('serverUrl');
+    return { ok: true, serverUrl: serverUrl || null, canRegister: canRegister() };
+  },
+  'ocu:setServer': async (msg) => {
+    const origin = normalizeOrigin(msg.serverUrl);
+    if (!origin) {
+      await ext.storage.local.remove('serverUrl');
+      await syncContentScript();
+      return { ok: true, serverUrl: null };
+    }
+    await ext.storage.local.set({ serverUrl: origin });
+    await syncContentScript();
+    return { ok: true, serverUrl: origin };
+  },
 };
 
 ext.runtime.onMessage.addListener((msg, _sender, sendResponse) => {

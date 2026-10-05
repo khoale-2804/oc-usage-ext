@@ -51,6 +51,23 @@
   </section>
 
   <section>
+    <h2>OpenChamber server</h2>
+    <p class="muted">
+      Where OpenChamber runs. Default is <code>http://localhost:3000</code>. On Tailscale, enter your
+      tailnet address, e.g. <code>http://100.64.0.5:3000</code> or
+      <code>http://nuc.tailnet.ts.net:3000</code>. The overlay is then injected on that origin.
+    </p>
+    <label class="field">Server URL
+      <input id="server" type="text" placeholder="http://100.64.0.5:3000" spellcheck="false" autocomplete="off">
+    </label>
+    <div class="actions">
+      <button id="save-server" class="primary" type="button">Save server</button>
+      <button id="clear-server" type="button">Use default</button>
+    </div>
+    <p id="server-status" class="status"></p>
+  </section>
+
+  <section>
     <h2>What each mode shows</h2>
     <ul class="muted">
       <li><b>On the OpenChamber page</b> — quota, per-turn cost / cache hit / i-c/o, peak timer. No key needed.</li>

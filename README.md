@@ -52,6 +52,17 @@ The same package works in both: the manifest declares `background.service_worker
 `background.scripts` (Firefox event page), and the scripts use `browser.*` when present, else
 `chrome.*`.
 
+### Different host (Tailscale, LAN, tunnel)
+
+The overlay only injects on `localhost:3000` / `127.0.0.1:3000` by default. For any other origin:
+
+1. Open the extension's **Settings** (popup → Settings, or `chrome://extensions` → Details → Extension options).
+2. Under **OpenChamber server**, enter your address, e.g. `http://100.64.0.5:3000` or
+   `http://nuc.tailnet.ts.net:3000`, and click **Save server** — grant the permission when asked.
+3. Open OpenChamber at that address; the overlay loads there.
+
+**Use default** clears it. The permission is requested for that one origin only.
+
 ## API key vault (popup mode)
 
 Toolbar icon → **Settings** (or `chrome://extensions` → Details → Extension options):
@@ -139,6 +150,9 @@ The extension collects nothing and sends nothing to us. It has no analytics.
 ```sh
 ./pack.sh        # builds oc-usage-ext.zip with the extension files only
 ```
+
+The built `oc-usage-ext.zip` is committed to this repo and attached to each GitHub release, so it can
+be downloaded and loaded directly. Rebuild with `./pack.sh` after changes.
 
 ## Publish to the Chrome Web Store
 

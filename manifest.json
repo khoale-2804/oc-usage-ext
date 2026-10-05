@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "OpenChamber Usage",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "OpenCode Go quota + per-turn cost + peak-hours timer, themed to OpenChamber.",
   "homepage_url": "https://github.com/khoale-2804/oc-usage-ext",
   "icons": {
@@ -10,8 +10,9 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "permissions": ["storage"],
+  "permissions": ["storage", "scripting"],
   "host_permissions": ["https://opencode.ai/*"],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
   "action": {
     "default_popup": "popup.html",
     "default_title": "OpenCode Go usage"

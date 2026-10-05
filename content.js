@@ -9,6 +9,7 @@
  *   SSE  /api/event                        -> data: {id, type, data}
  */
 (() => {
+  if (document.getElementById('oc-usage-ext')) return; // already injected
   const ORIGIN = location.origin;
   const { fmtTokens, fmtMoney, fmtInt, cacheHit, quotaWindowsHTML, peakRowsHTML } = OCU;
 

@@ -60,6 +60,55 @@
     status('Vault wiped.', '');
   }
 
+  // --- OpenChamber server (Tailscale etc.) ---
+  const serverStatus = (text, kind) => {
+    const el = $('server-status');
+    el.textContent = text;
+    el.className = 'status' + (kind ? ' ' + kind : '');
+  };
+  const normalizeOrigin = (input) => {
+    if (!input || !input.trim()) return null;
+    let raw = input.trim();
+    if (!/^https?:\/\//i.test(raw)) raw = 'http://' + raw;
+    try { return new URL(raw).origin; } catch { return null; }
+  };
+
+  async function loadServer() {
+    const res = await send({ type: 'ocu:getServer' });
+    $('server').value = (res && res.serverUrl) || '';
+    if (res && res.canRegister === false) {
+      serverStatus('This browser cannot register the overlay at runtime; add the origin to manifest.json instead.', 'err');
+    } else if (res && res.serverUrl) {
+      serverStatus('Overlay active on ' + res.serverUrl, 'ok');
+    } else {
+      serverStatus('Using the default localhost:3000.');
+    }
+  }
+
+  async function saveServer() {
+    const origin = normalizeOrigin($('server').value);
+    if (!origin) return serverStatus('Enter a valid URL, e.g. http://100.64.0.5:3000', 'err');
+    // Must be the first await: permissions.request needs the click gesture.
+    let granted = true;
+    if (ext.permissions && ext.permissions.request) {
+      try { granted = await ext.permissions.request({ origins: [origin + '/*'] }); } catch { granted = false; }
+    }
+    if (!granted) return serverStatus('Permission denied for ' + origin, 'err');
+    const res = await send({ type: 'ocu:setServer', serverUrl: origin });
+    $('server').value = (res && res.serverUrl) || origin;
+    serverStatus('Saved. Overlay active on ' + ((res && res.serverUrl) || origin), 'ok');
+  }
+
+  async function clearServer() {
+    await send({ type: 'ocu:setServer', serverUrl: '' });
+    $('server').value = '';
+    serverStatus('Using the default localhost:3000.');
+  }
+
+  $('save-server').addEventListener('click', saveServer);
+  $('clear-server').addEventListener('click', clearServer);
+  loadServer();
+
   $('save').addEventListener('click', save);
   $('do-unlock').addEventListener('click', unlock);
   $('lock').addEventListener('click', lock);
