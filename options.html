@@ -2,77 +2,46 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>OpenChamber Usage — settings</title>
+<title>OpenChamber Go — settings</title>
 <link rel="stylesheet" href="options.css">
 </head>
 <body>
 <main>
-  <h1>OpenChamber Usage</h1>
+  <h1>OpenChamber Go</h1>
+  <p class="muted">
+    A peak-hours chip for the DeepSeek off-peak window, plus the Go key
+    switcher and per-subscription quota. It renders inside the OpenChamber page
+    and signs in with that page's own session — no key is stored here.
+  </p>
 
   <section>
-    <h2>OpenCode Go key vault</h2>
+    <h2>OpenChamber address</h2>
     <p class="muted">
-      The key is encrypted with your passphrase (AES-GCM, PBKDF2-SHA256). Only the ciphertext is
-      stored; the key is never shown again and <b>cannot be recovered if you forget the
-      passphrase</b>. Unlocked, it lives only in memory and auto-locks after 15 minutes. It is used
-      only to call <code>opencode.ai</code>.
-    </p>
-    <p id="status" class="status"></p>
-
-    <div id="setup">
-      <label class="field">API key
-        <input id="key" type="password" placeholder="opencode-go API key" autocomplete="off" spellcheck="false">
-      </label>
-      <label class="field">Passphrase
-        <input id="pass" type="password" placeholder="at least 8 characters" autocomplete="new-password">
-      </label>
-      <label class="field">Confirm passphrase
-        <input id="pass2" type="password" autocomplete="new-password">
-      </label>
-      <div class="actions">
-        <button id="save" class="primary" type="button">Encrypt &amp; save</button>
-      </div>
-      <p class="muted small">
-        Find the key in <code>~/.local/share/opencode/auth.json</code> under the
-        <code>opencode-go</code> entry, or from your OpenCode Go account.
-      </p>
-    </div>
-
-    <div id="manage" style="display:none">
-      <label class="field">Passphrase
-        <input id="unlock-pass" type="password" placeholder="unlock for this session" autocomplete="off">
-      </label>
-      <div class="actions">
-        <button id="do-unlock" class="primary" type="button">Unlock</button>
-        <button id="lock" type="button">Lock now</button>
-        <button id="wipe" class="danger" type="button">Wipe vault</button>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <h2>OpenChamber server</h2>
-    <p class="muted">
-      Where OpenChamber runs. Default is <code>http://localhost:3000</code>. On Tailscale, enter your
-      tailnet address, e.g. <code>http://100.64.0.5:3000</code> or
-      <code>http://nuc.tailnet.ts.net:3000</code>. The overlay is then injected on that origin.
+      The address you open OpenChamber at, usually your Tailscale one. The chip is
+      injected on that origin only.
     </p>
     <label class="field">Server URL
-      <input id="server" type="text" placeholder="http://100.64.0.5:3000" spellcheck="false" autocomplete="off">
+      <input id="server" type="text" placeholder="http://100.92.46.9:3000" spellcheck="false" autocomplete="off">
     </label>
     <div class="actions">
-      <button id="save-server" class="primary" type="button">Save server</button>
-      <button id="clear-server" type="button">Use default</button>
+      <button id="save-server" class="primary" type="button">Save</button>
+      <button id="clear-server" type="button">Reset to default</button>
     </div>
     <p id="server-status" class="status"></p>
+    <p id="register-note" class="muted small" hidden></p>
   </section>
 
   <section>
-    <h2>What each mode shows</h2>
-    <ul class="muted">
-      <li><b>On the OpenChamber page</b> — quota, per-turn cost / cache hit / i-c/o, peak timer. No key needed.</li>
-      <li><b>Toolbar popup (anywhere)</b> — quota + peak timer, using the vault above. Per-turn needs OpenChamber.</li>
-    </ul>
+    <h2>Reading a key's quota</h2>
+    <p class="muted">
+      OpenChamber reports quota for the active key only. To show each
+      subscription separately, the chip makes each key active for a moment,
+      reads its pool, then puts the previous key back. It does that when you
+      open the chip or press refresh, never on a timer.
+    </p>
+    <div class="actions">
+      <button id="clear-cache" type="button">Forget cached quota</button>
+    </div>
   </section>
 </main>
 <script src="options.js"></script>

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "OpenChamber Usage",
-  "version": "0.6.0",
-  "description": "OpenCode Go quota + per-turn cost + peak-hours timer, themed to OpenChamber.",
+  "name": "OpenChamber Go",
+  "version": "0.7.0",
+  "description": "DeepSeek peak-hours chip for OpenChamber, with per-subscription Go quota and a switch for the active Go key.",
   "homepage_url": "https://github.com/khoale-2804/oc-usage-ext",
   "icons": {
     "16": "icons/icon16.png",
@@ -11,11 +11,9 @@
     "128": "icons/icon128.png"
   },
   "permissions": ["storage", "scripting"],
-  "host_permissions": ["https://opencode.ai/*"],
   "optional_host_permissions": ["http://*/*", "https://*/*"],
   "action": {
-    "default_popup": "popup.html",
-    "default_title": "OpenCode Go usage"
+    "default_title": "Open OpenChamber"
   },
   "options_ui": {
     "page": "options.html",
@@ -27,18 +25,8 @@
   },
   "browser_specific_settings": {
     "gecko": {
-      "id": "oc-usage-ext@khoale-2804",
+      "id": "oc-go@khoale-2804",
       "strict_min_version": "115.0"
     }
-  },
-  "content_scripts": [
-    {
-      "matches": [
-        "http://localhost:3000/*",
-        "http://127.0.0.1:3000/*"
-      ],
-      "js": ["shared.js", "content.js"],
-      "run_at": "document_idle"
-    }
-  ]
+  }
 }

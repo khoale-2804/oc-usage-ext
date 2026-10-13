@@ -2,63 +2,74 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>oc-usage widget harness</title>
+<title>oc-go chip harness</title>
 <style>
 /* OpenChamber light tokens, copied verbatim from @openchamber/web dist/assets/index-*.css */
 :root{color-scheme:light;-webkit-font-smoothing:antialiased;--oc-glass-blur:22px;--oc-glass-opacity:52%;--oc-glass-saturation:1.24;--text-meta:.8125rem;--background:oklch(97% .02 85);--foreground:oklch(25% .02 40);--card:oklch(99% .01 90);--card-foreground:oklch(25% .02 40);--popover:oklch(99% .01 90);--popover-foreground:oklch(25% .02 40);--primary:oklch(65% .2 55);--primary-foreground:oklch(99% .01 90);--secondary:oklch(92% .02 80);--secondary-foreground:oklch(25% .02 40);--muted:oklch(90% .015 75);--muted-foreground:oklch(45% .02 50);--accent:oklch(92% .02 80);--accent-foreground:oklch(25% .02 40);--destructive:oklch(55% .25 25);--destructive-foreground:oklch(99% .01 90);--border:oklch(85% .02 70);--input:oklch(88% .02 75);--ring:oklch(65% .2 55);--radius:.5625rem;--chart-1:oklch(58% .15 230);--chart-2:oklch(58% .15 145);--chart-3:oklch(65% .2 55);--chart-4:oklch(55% .18 30);--chart-5:oklch(60% .16 85);--sidebar:oklch(95% .02 80);--sidebar-foreground:oklch(25% .02 40)}
 .dark{--oc-glass-blur:26px;--oc-glass-opacity:50%;--oc-glass-saturation:1.16;--background:oklch(16% .01 30);--foreground:oklch(85% .02 90);--card:oklch(19% .01 40);--card-foreground:oklch(85% .02 90);--popover:oklch(24% .01 40);--popover-foreground:oklch(85% .02 90);--primary:oklch(77% .17 85);--primary-foreground:oklch(16% .01 30);--secondary:oklch(29% .01 40);--secondary-foreground:oklch(85% .02 90);--muted:oklch(33% .01 40);--muted-foreground:oklch(75% .02 80);--accent:oklch(29% .01 40);--accent-foreground:oklch(85% .02 90);--destructive:oklch(65% .15 30);--destructive-foreground:oklch(90% .02 80);--border:oklch(31% .01 35);--input:oklch(33% .01 40);--ring:oklch(77% .17 85);--chart-1:oklch(68% .12 230);--chart-2:oklch(68% .12 145);--chart-3:oklch(70% .13 95);--chart-4:oklch(65% .14 45);--chart-5:oklch(68% .12 55);--sidebar:oklch(16% .01 30);--sidebar-foreground:oklch(85% .02 90)}
 html,body{margin:0;height:100%}
-body{background:var(--background);color:var(--foreground);font:14px system-ui;transition:background .2s}
+body{background:var(--background);color:var(--foreground);font:14px system-ui}
 </style>
 </head>
 <body>
 <script>
-// Theme from query: ?theme=dark
-const theme = new URLSearchParams(location.search).get('theme');
-if (theme === 'dark') document.documentElement.classList.add('dark');
+const params = new URLSearchParams(location.search);
+if (params.get('theme') === 'dark') document.documentElement.classList.add('dark');
 
-// ---- mock the OpenChamber API surface (shapes taken from a live 2.1.1 server) ----
-const now = Date.now();
-const QUOTA = { providerId:'opencode-go', providerName:'OpenCode Go', ok:true, configured:true,
-  usage:{ windows:{
-    '5h':{usedPercent:29,remainingPercent:71,resetAfterSeconds:4008,resetAtFormatted:'2:22 PM'},
-    weekly:{usedPercent:11,remainingPercent:89,resetAfterSeconds:589455,resetAtFormatted:'Mon, Oct 12, 9:00 AM'},
-    monthly:{usedPercent:62,remainingPercent:38,resetAfterSeconds:1626787,resetAtFormatted:'Sat, Oct 24, 9:08 AM'} }},
-  fetchedAt: now };
-const SESSION = { data:{ id:'ses_demo', cost:0.09533877, tokens:{input:284728,output:20124,reasoning:25551,cache:{read:8408192,write:0}} } };
-// newest-first, like ?order=desc: assistant then its user, per turn
-const A = (input, read, output, cost) => ({type:'assistant', finish:'stop', cost, tokens:{input,output,reasoning:Math.round(output/2),cache:{read,write:0}}});
-const U = { type:'user' };
-const MESSAGES = { data: [
-  A(1477, 178944, 245, 0.000974382), U,
-  A(2100, 120000, 180, 0.0007121),  U,
-  A(980,  96000,  320, 0.0005544),  U,
-  A(3200, 64000,  410, 0.0004202),  U,
-  A(1500, 30000,  120, 0.0002033),  U,
-  A(800,  5000,   90,  0.0000912),  U,
-]};
-const STATS = { data: { range:{ from:1790211064023, to: now }, sessions:900, subagents:74, prompts:1849, steps:6995,
-  tokens:{ input:46226117, output:2346111, reasoning:3658655, cache:{ read:855172427, write:0 } }, cost:19.234021892,
-  tools:{ mode:'summary', totals:{ calls:6836, succeeded:6755, failed:79, unfinished:2 } }, activeDays:11, streak:10, activity:[],
-  models:[
-    { model:{ id:'deepseek-v4.1-flash', providerID:'opencode-go', variant:'high' }, steps:3335, tokens:{}, cost:5.933561238 },
-    { model:{ id:'glm-5.3-flash', providerID:'zai-coding-plan' }, steps:1200, tokens:{}, cost:3.1042 },
-    { model:{ id:'deepseek-v4.1-flash', providerID:'opencode-go', variant:'low' }, steps:880, tokens:{}, cost:2.4177 },
-  ] } };
+// Fixed clock for previews: ?at=HH:MM means that JST wall time on Tue 2026-10-13.
+const at = params.get('at');
+if (at) {
+  const [h, m] = at.split(':').map(Number);
+  const fixed = Date.UTC(2026, 9, 13, h - 9, m, 0); // JST = UTC+9
+  Date.now = () => fixed;
+}
 
-window.fetch = (url) => Promise.resolve({
-  ok:true,
-  json: () => Promise.resolve(
-    url.includes('/experimental/session/stats') ? STATS :
-    url.includes('/api/quota/opencode-go') ? QUOTA :
-    url.includes('/message') ? MESSAGES :
-    /\/api\/session\?/.test(url) ? { data:[SESSION.data], cursor:{} } : SESSION),
-});
+// ---- mock storage.local (content.js caches quota fingerprints there) ----
+const mem = {};
+globalThis.chrome = { storage: { local: {
+  get: (k) => Promise.resolve(Object.fromEntries(([].concat(k)).map((x) => [x, mem[x]]))),
+  set: (o) => { Object.assign(mem, o); return Promise.resolve(); },
+  remove: (k) => { for (const x of [].concat(k)) delete mem[x]; return Promise.resolve(); },
+} } };
 
-window.EventSource = class { constructor(){} set onmessage(f){ this._f=f; } set onerror(f){} };
+// ---- mock the OpenChamber API (shapes from a live 2.3.1 server) ----
+const KEYS = [
+  { id: 'cred_10bf5520e0010Bmhurn01FXW8n', label: 'OpenCode Go 2' },
+  { id: 'cred_10bf3ee2c001eOdoWWAIZch2AD', label: 'OpenCode Go' },
+];
+const POOLS = {
+  cred_10bf5520e0010Bmhurn01FXW8n: { '5h': [7, '9:21 PM', 6100], weekly: [3, 'Mon, Oct 19, 9:00 AM', 280000], monthly: [92, 'Sat, Oct 24, 9:08 AM', 900000] },
+  cred_10bf3ee2c001eOdoWWAIZch2AD: { '5h': [99, '6:41 PM', 300], weekly: [56, 'Mon, Oct 19, 9:00 AM', 300000], monthly: [68, 'Thu, Nov 5, 8:50 PM', 1500000] },
+};
+let active = KEYS[0].id;
+const quota = () => {
+  const pool = POOLS[active];
+  const windows = {};
+  for (const k of ['5h', 'weekly', 'monthly']) {
+    const [usedPercent, resetAtFormatted, resetAfterSeconds] = pool[k];
+    windows[k] = { usedPercent, remainingPercent: 100 - usedPercent, windowSeconds: null,
+      resetAfterSeconds, resetAt: Date.now() + resetAfterSeconds * 1000, resetAtFormatted };
+  }
+  return { providerId: 'opencode-go', providerName: 'OpenCode Go', ok: true, configured: true,
+    usage: { windows }, fetchedAt: Date.now() };
+};
+window.fetch = (url, opts) => {
+  const path = String(url).replace(location.origin, '');
+  const method = (opts && opts.method) || 'GET';
+  const body = (data) => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(data) });
+  if (path === '/api/integration/opencode-go') return body({ data: { id: 'opencode-go', name: 'OpenCode Go', connections: KEYS.map((k) => ({ type: 'credential', method: 'key', ...k })) } });
+  if (path === '/api/quota/opencode-go') return body(quota());
+  const act = path.match(/^\/api\/credential\/([^/]+)\/activate$/);
+  if (act && method === 'POST') { active = decodeURIComponent(act[1]); return Promise.resolve({ ok: true, status: 204, json: () => Promise.resolve(null) }); }
+  return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({}) });
+};
 </script>
-<!-- load the real widget code -->
+<!-- the real widget -->
 <script src="/shared.js"></script>
 <script src="/content.js"></script>
+<script>
+// open the chip so screenshots show the expanded state
+document.getElementById('oc-usage-ext').shadowRoot.getElementById('hdr').click();
+</script>
 </body>
 </html>

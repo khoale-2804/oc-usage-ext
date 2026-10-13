@@ -1,13 +1,16 @@
 :root {
   color-scheme: light dark;
-  --bg: #faf7f0; --fg: #241f18; --card: #ffffff; --border: #e4ddcf;
-  --muted: #ece7dd; --muted-fg: #6b6257; --primary: #c98a1e; --primary-fg: #fff;
+  /* Flexoki, the palette behind OpenChamber's flexoki-light / flexoki-dark */
+  --bg: #fffcf0; --fg: #100f0f; --card: #ffffff; --border: #e6e4d9;
+  --muted: #f2f0e5; --muted-fg: #6f6e69; --primary: #bc5215; --primary-fg: #fffcf0;
+  --ok: #66800b; --err: #af3029;
   --radius: 9px;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #14120f; --fg: #ece7dd; --card: #1c1a16; --border: #38332b;
-    --muted: #2c2924; --muted-fg: #a89f92; --primary: #e8b04b; --primary-fg: #1a1610;
+    --bg: #100f0f; --fg: #cecdc3; --card: #1c1b1a; --border: #282726;
+    --muted: #282726; --muted-fg: #878580; --primary: #da702c; --primary-fg: #100f0f;
+    --ok: #879a39; --err: #d14d41;
   }
 }
 * { box-sizing: border-box; }
@@ -37,8 +40,6 @@ input:focus { outline: 2px solid var(--primary); outline-offset: -1px; }
 .actions { display: flex; gap: 8px; margin: 12px 0 4px; }
 .field { display: block; margin-bottom: 10px; font-size: 13px; color: var(--muted-fg); }
 .field input { margin-top: 4px; }
-button.danger { color: #c62828; }
-@media (prefers-color-scheme: dark) { button.danger { color: #ef8a86; } }
 button {
   font: inherit; padding: 8px 14px; border-radius: var(--radius);
   border: 1px solid var(--border); background: var(--muted); color: var(--fg); cursor: pointer;
@@ -46,7 +47,7 @@ button {
 button.primary { background: var(--primary); color: var(--primary-fg); border-color: transparent; }
 button:hover { border-color: var(--primary); }
 .status { font-size: 13px; min-height: 1.2em; }
-.status.ok { color: #2e7d32; }
-.status.err { color: #c62828; }
+.status.ok { color: var(--ok); }
+.status.err { color: var(--err); }
 ul { margin: 0; padding-left: 18px; }
 li { margin: 3px 0; }
